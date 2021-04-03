@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import BoundingBox from '../BoundingBox';
 import CenterCross from '../CenterCross';
 import { isSelectedSelector } from '../slices/selection.slice';
-import useDrag from '../useDrag';
+import useTransforms from '../useTransforms';
 
 import { Shape } from './shape';
 
@@ -19,11 +19,11 @@ export const RectangleComponent: React.FC<Rectangle> = (rectangle) => {
 
   const ref = useRef<SVGGElement>(null);
   const selected = useSelector(isSelectedSelector)(id);
-  const dragHandlers = useDrag(rectangle, ref.current);
+  const transformsProps = useTransforms(rectangle, ref);
 
   return (
     <g key={id} ref={ref}>
-      <rect x={x} y={y} width={width} height={height} {...props} {...dragHandlers} />
+      <rect x={x} y={y} width={width} height={height} {...props} {...transformsProps} />
       {selected && (
         <>
           <CenterCross x={x + width / 2} y={y + height / 2} size={Math.max(width, height) / 6} />

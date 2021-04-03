@@ -10,6 +10,7 @@ import { addShape } from './slices/shape.slice';
 import { isRectangle, RectangleComponent } from './shapes/rectangle';
 import { Config } from './slices/config.slice';
 import Grid from './Grid';
+import { isPath, PathComponent } from './shapes/path';
 
 type SvgOutputProps = React.SVGProps<SVGSVGElement>;
 
@@ -30,6 +31,10 @@ const SvgOutput = forwardRef<SVGSVGElement, SvgOutputProps>((props, forwardedRef
 
     if (isRectangle(shape)) {
       return <RectangleComponent {...shape} />;
+    }
+
+    if (isPath(shape)) {
+      return <PathComponent {...shape} />;
     }
   };
 
@@ -53,28 +58,35 @@ const App: React.FC = () => {
 
   const dispatch = useDispatch();
   const svgRef = useRef<SVGSVGElement>(null);
-  const selection = useSelector(selectionSelector);
 
   useEffect(() => {
-    dispatch(addShape({ type: 'circle', x: 8, y: 8, radius: 4, fill: '#ABCDEF' }));
-    dispatch(addShape({ type: 'rectangle', x: 11.9, y: 5.6, width: 3, height: 5, fill: '#FEDCBA' }));
+    // dispatch(addShape({ type: 'circle', x: 8, y: 8, radius: 4, fill: '#ABCDEF' }));
+    // dispatch(addShape({ type: 'rectangle', x: 11.9, y: 5.6, width: 3, height: 5, fill: '#DCBAFE' }));
+    dispatch(
+      addShape({
+        type: 'path',
+        x: 0,
+        y: 0,
+        commands: [
+          ['M', { x: 10, y: 10 }],
+          ['C', { x: 20, y: 20 }, { x: 40, y: 20 }, { x: 50, y: 10 }],
+          // ['L', { x: 20, y: 20 }],
+          // ['H', 40],
+          // ['V', 40],
+          // ['L', { x: 20, y: 30 }],
+          // ['Z'],
+        ],
+        stroke: '#FEDCBA',
+        fill: 'transparent',
+        strokeWidth: 1,
+      })
+    );
   }, []);
 
   return (
     <configContext.Provider value={config}>
       <div id="container" style={{ width, height, position: 'relative' }}>
-        <SvgOutput
-          ref={svgRef}
-          width="100%"
-          height="100%"
-          viewBox={viewBox}
-          style={{ position: 'absolute' }}
-          onClick={(e) => {
-            if (selection && document.elementFromPoint(e.clientX, e.clientY) === svgRef.current) {
-              dispatch(clearSelection());
-            }
-          }}
-        />
+        <SvgOutput ref={svgRef} width="100%" height="100%" viewBox={viewBox} style={{ position: 'absolute' }} />
       </div>
     </configContext.Provider>
   );

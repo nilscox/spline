@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import BoundingBox from '../BoundingBox';
 import CenterCross from '../CenterCross';
 import { isSelectedSelector } from '../slices/selection.slice';
-import useDrag from '../useDrag';
+import useTransforms from '../useTransforms';
 import { Shape } from './shape';
 
 export type Circle = Shape<'circle'> & {
@@ -18,11 +18,11 @@ export const CircleComponent: React.FC<Circle> = (circle) => {
 
   const ref = useRef<SVGGElement>(null);
   const selected = useSelector(isSelectedSelector)(id);
-  const dragHandlers = useDrag(circle, ref.current);
+  const transformsProps = useTransforms(circle, ref);
 
   return (
     <g key={id} ref={ref}>
-      <circle cx={x} cy={y} r={radius} {...props} {...dragHandlers} />
+      <circle cx={x} cy={y} r={radius} {...props} {...transformsProps} />
       {selected && (
         <>
           <CenterCross x={x} y={y} size={radius / 4} />

@@ -5,4 +5,5 @@ export type Shape<T extends string> = {
   y: number;
   fill?: string;
   stroke?: string;
+  strokeWidth?: number;
 };

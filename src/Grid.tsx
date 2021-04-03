@@ -3,22 +3,12 @@ import { useConfig } from './App';
 import useHelperStrokeWidth from './useHelperStrokeWidth';
 
 const Grid: React.FC = () => {
-  const {
-    gridCellSize: cellSize,
-    showGrid: show,
-    viewWidth: width,
-    viewHeight: height,
-    viewBoxX,
-    viewBoxY,
-    viewBoxWidth,
-    viewBoxHeight,
-  } = useConfig();
-
+  const { gridCellSize: cellSize, showGrid: show, viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight } = useConfig();
   const strokeWidth = useHelperStrokeWidth();
 
   return (
     <g visibility={show ? 'visible' : 'hidden'}>
-      {new Array(height).fill(null).map((_, n) => (
+      {new Array(viewBoxHeight).fill(null).map((_, n) => (
         <line
           key={n}
           x1={viewBoxX}
@@ -29,7 +19,7 @@ const Grid: React.FC = () => {
           strokeWidth={strokeWidth}
         />
       ))}
-      {new Array(width).fill(null).map((_, n) => (
+      {new Array(viewBoxWidth).fill(null).map((_, n) => (
         <line
           key={n}
           x1={n * cellSize}
