@@ -27,7 +27,10 @@ const isHorizontalLine = (command: CommandDef): command is HorizontalLineCommand
 type VerticalLineCommand = ['V' | 'v', number];
 const isVerticalLine = (command: CommandDef): command is VerticalLineCommand => command[0].toUpperCase() === 'V';
 
-type CommandDef = MoveToCommand | LineToCommand | HorizontalLineCommand | VerticalLineCommand;
+type CubicBezierCommand = ['C' | 'c', Point, Point, Point];
+const isCubicBezier = (command: CommandDef): command is CubicBezierCommand => command[0].toUpperCase() === 'C';
+
+type CommandDef = MoveToCommand | LineToCommand | HorizontalLineCommand | VerticalLineCommand | CubicBezierCommand;
 type CommandsDef = [MoveToCommand, ...CommandDef[]];
 
 export type Path = Shape<'path'> & {
@@ -72,7 +75,6 @@ abstract class Command extends EventTarget {
   abstract toString(): string;
   abstract toJSON(): CommandDef;
 
-  abstract getRelativePosition(): Point;
   abstract getAbsolutePosition(): Point;
 
   abstract addHandles(): void;
@@ -106,14 +108,6 @@ abstract class MoveLineTo<T extends 'M' | 'L'> extends Command {
     }
 
     return addPoints(this.prev.getAbsolutePosition(), this.position);
-  }
-
-  getRelativePosition() {
-    if (this.relative || !this.prev) {
-      return this.position;
-    }
-
-    return substractPoints(this.position ?? this.getAbsolutePosition(), this.prev.getAbsolutePosition());
   }
 
   addHandles() {
@@ -175,10 +169,6 @@ abstract class StraightLine<T extends 'H' | 'V'> extends Command {
     return this.getAbsolutePositionFrom(this.prev.getAbsolutePosition());
   }
 
-  getRelativePosition() {
-    return { x: 0, y: 0 };
-  }
-
   addHandles() {
     this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove.bind(this)));
   }
@@ -230,7 +220,64 @@ class VerticalLine extends StraightLine<'V'> {
   }
 }
 
-type PathCommand = MoveTo | LineTo | HorizontalLine | VerticalLine;
+class CubicBezier extends Command {
+  constructor(relative: boolean, private control1: Point, private control2: Point, private end: Point) {
+    super(relative);
+  }
+
+  private get letter() {
+    return this.relative ? 'c' : 'C';
+  }
+
+  toString() {
+    const { control1, control2, end } = this;
+
+    return `${this.letter} ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`;
+  }
+
+  toJSON(): CubicBezierCommand {
+    return [this.letter, this.control1, this.control2, this.end];
+  }
+
+  getAbsolutePosition(point = this.end) {
+    if (!this.relative || !this.prev) {
+      return point;
+    }
+
+    return addPoints(this.prev.getAbsolutePosition(), point);
+  }
+
+  addHandles() {
+    this.handles.push(new Handle(this.getAbsolutePosition(this.control1), this.onMove('control1')));
+    this.handles.push(new Handle(this.getAbsolutePosition(this.control2), this.onMove('control2')));
+    this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove('end')));
+  }
+
+  updateHandles() {
+    this.handles[0].setPosition(this.getAbsolutePosition(this.control1));
+    this.handles[1].setPosition(this.getAbsolutePosition(this.control2));
+    this.handles[2].setPosition(this.getAbsolutePosition());
+  }
+
+  onMove(which: 'control1' | 'control2' | 'end') {
+    return (position: Point, mouse: 'up' | 'move') => {
+      const newPosition = this.relative ? substractPoints(position, this.prev?.getAbsolutePosition()) : position;
+
+      if (which === 'control1') {
+        this.control1 = newPosition;
+      } else if (which === 'control2') {
+        this.control2 = newPosition;
+      } else {
+        this.end = newPosition;
+      }
+
+      this.updateHandles();
+      this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
+    };
+  }
+}
+
+type PathCommand = MoveTo | LineTo | HorizontalLine | VerticalLine | CubicBezier;
 
 class PathCommands {
   private commands: [MoveTo, ...PathCommand[]];
@@ -255,6 +302,7 @@ class PathCommands {
       if (isLineTo(def)) return new LineTo(relative, def[1]);
       if (isHorizontalLine(def)) return new HorizontalLine(relative, def[1]);
       if (isVerticalLine(def)) return new VerticalLine(relative, def[1]);
+      if (isCubicBezier(def)) return new CubicBezier(relative, def[1], def[2], def[3]);
 
       throw new Error();
     };
