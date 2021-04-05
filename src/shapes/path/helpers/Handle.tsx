@@ -6,24 +6,24 @@ import { Point } from '../../../Point';
 import useHelperStrokeWidth from '../../../useHelperStrokeWidth';
 import useTranslation from '../../../useTranslation';
 
-export type HandleProps = {
+export type HandleProps = React.SVGProps<SVGRectElement> & {
   x: number;
   y: number;
-  onMove: (p: { x: number; y: number }, mouse: 'up' | 'move') => void;
+  onMove?: (p: { x: number; y: number }, mouse: 'up' | 'move') => void;
 };
 
 export type HandleRef = {
   setPosition: (point: Point) => void;
 };
 
-const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, ref) => {
+const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove, ...props }, ref) => {
   const strokeWidth = useHelperStrokeWidth();
   const size = strokeWidth * 15;
 
   const rectRef = useRef<SVGRectElement>(null);
   const crossRef = useRef<CrossRef>(null);
 
-  const translateHandlers = useTranslation(onMove, true);
+  const translateHandlers = useTranslation(onMove ?? (() => {}), true);
 
   useImperativeHandle(ref, () => ({
     setPosition: ({ x, y }: Point) => {
@@ -44,10 +44,18 @@ const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, re
         stroke="#CCC"
         strokeWidth={strokeWidth}
         transform={`translate(${x}, ${y})`}
-        style={{ cursor: 'grab' }}
-        {...translateHandlers}
+        {...(onMove && translateHandlers)}
+        {...props}
+        style={{ cursor: onMove ? 'grab' : undefined, ...props.style }}
       />
-      <Cross ref={crossRef} x={x} y={y} size={size * (2 / 3)} color="#99F" />
+      <Cross
+        ref={crossRef}
+        x={x}
+        y={y}
+        size={size * (2 / 3)}
+        color="#99F"
+        style={{ ...props.style, pointerEvents: 'none' }}
+      />
     </>
   );
 });
@@ -58,7 +66,7 @@ class Handle {
   private ref: HandleRef | null = null;
   public element: ReactElement;
 
-  constructor(private position: Point, onMove: HandleProps['onMove']) {
+  constructor(private position: Point, onMove?: HandleProps['onMove'], dash = false) {
     this.element = (
       <HandleComponent
         key={this.id}
@@ -66,6 +74,8 @@ class Handle {
         x={this.position.x}
         y={this.position.y}
         onMove={onMove}
+        strokeDasharray={dash ? 1 : undefined}
+        style={{ pointerEvents: dash ? 'none' : undefined }}
       />
     );
   }

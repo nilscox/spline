@@ -14,3 +14,7 @@ export const addPoints = ({ x: x1, y: y1 }: Point, { x: x2, y: y2 }: Point = { x
 export const substractPoints = ({ x: x1, y: y1 }: Point, { x: x2, y: y2 }: Point = { x: 0, y: 0 }): Point => {
   return { x: x1 - x2, y: y1 - y2 };
 };
+
+export const reflectPoint = (p: Point, c: Point = { x: 0, y: 0 }): Point => {
+  return addPoints(c, substractPoints(c, p));
+};

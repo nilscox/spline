@@ -28,12 +28,18 @@ export const isCubicBezier = (command: CommandDef): command is CubicBezierComman
   return command[0].toUpperCase() === 'C';
 };
 
+export type SlopeCubicBezierCommand = ['S' | 's', Point, Point];
+export const isSlopeCubicBezier = (command: CommandDef): command is SlopeCubicBezierCommand => {
+  return command[0].toUpperCase() === 'S';
+};
+
 export type CommandDef =
   | MoveToCommand
   | LineToCommand
   | HorizontalLineCommand
   | VerticalLineCommand
-  | CubicBezierCommand;
+  | CubicBezierCommand
+  | SlopeCubicBezierCommand;
 
 export type CommandsDef = [MoveToCommand, ...CommandDef[]];
 

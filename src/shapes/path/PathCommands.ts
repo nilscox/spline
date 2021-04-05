@@ -1,11 +1,11 @@
 import { MoveTo, LineTo } from './commands/MoveLineTo';
 import { HorizontalLine, VerticalLine } from './commands/StraightLine';
-import { CubicBezier } from './commands/CubicBezier';
+import { CubicBezier, SlopeCubicBezier } from './commands/CubicBezier';
 // prettier-ignore
-import { CommandDef, CommandsDef, isCubicBezier, isHorizontalLine, isLineTo, isMoveTo, isVerticalLine } from './Command';
+import { CommandDef, CommandsDef, isCubicBezier, isHorizontalLine, isLineTo, isMoveTo, isSlopeCubicBezier, isVerticalLine } from './Command';
 import { PathUpdateEvent } from './PathUpdateEvent';
 
-export type PathCommand = MoveTo | LineTo | HorizontalLine | VerticalLine | CubicBezier;
+export type PathCommand = MoveTo | LineTo | HorizontalLine | VerticalLine | CubicBezier | SlopeCubicBezier;
 
 export class PathCommands {
   private commands: [MoveTo, ...PathCommand[]];
@@ -31,6 +31,7 @@ export class PathCommands {
       if (isHorizontalLine(def)) return new HorizontalLine(relative, def[1]);
       if (isVerticalLine(def)) return new VerticalLine(relative, def[1]);
       if (isCubicBezier(def)) return new CubicBezier(relative, def[1], def[2], def[3]);
+      if (isSlopeCubicBezier(def)) return new SlopeCubicBezier(relative, def[1], def[2]);
 
       throw new Error();
     };
