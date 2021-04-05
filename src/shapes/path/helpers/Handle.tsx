@@ -19,7 +19,7 @@ export type HandleRef = {
 const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, ref) => {
   const strokeWidth = useHelperStrokeWidth();
   const size = strokeWidth * 15;
-  const lineRef = useRef<SVGLineElement>(null);
+
   const rectRef = useRef<SVGRectElement>(null);
   const crossRef = useRef<CrossRef>(null);
 
@@ -27,8 +27,6 @@ const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, re
 
   useImperativeHandle(ref, () => ({
     setPosition: ({ x, y }: Point) => {
-      lineRef.current?.setAttribute('x2', `${x}`);
-      lineRef.current?.setAttribute('y2', `${y}`);
       rectRef.current?.setAttribute('transform', `translate(${x}, ${y})`);
       crossRef.current?.setPosition({ x, y });
     },

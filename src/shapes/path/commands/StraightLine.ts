@@ -47,6 +47,7 @@ abstract class StraightLine<T extends 'H' | 'V'> extends Command {
     this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
   }
 }
+
 export class HorizontalLine extends StraightLine<'H'> {
   constructor(relative: boolean, length: number) {
     super(relative, 'H', length);
@@ -64,6 +65,7 @@ export class HorizontalLine extends StraightLine<'H'> {
     super.onMove(position, mouse);
   }
 }
+
 export class VerticalLine extends StraightLine<'V'> {
   constructor(relative: boolean, length: number) {
     super(relative, 'V', length);
