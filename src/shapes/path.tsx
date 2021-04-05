@@ -1,10 +1,7 @@
-import produce from 'immer';
-import React, { forwardRef, ReactElement, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { ReactElement, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { Point } from '../Point';
 import { updateShape } from '../slices/shape.slice';
-import useHelperStrokeWidth from '../useHelperStrokeWidth';
-import useTranslation from '../useTranslation';
 import HandleComponent, { HandleProps, HandleRef } from './Handle';
 import { v4 as uuid } from 'uuid';
 
@@ -24,7 +21,13 @@ const isMoveTo = (command: CommandDef): command is MoveToCommand => command[0].t
 type LineToCommand = ['L' | 'l', Point];
 const isLineTo = (command: CommandDef): command is LineToCommand => command[0].toUpperCase() === 'L';
 
-type CommandDef = MoveToCommand | LineToCommand;
+type HorizontalLineCommand = ['H' | 'h', number];
+const isHorizontalLine = (command: CommandDef): command is HorizontalLineCommand => command[0].toUpperCase() === 'H';
+
+type VerticalLineCommand = ['V' | 'v', number];
+const isVerticalLine = (command: CommandDef): command is VerticalLineCommand => command[0].toUpperCase() === 'V';
+
+type CommandDef = MoveToCommand | LineToCommand | HorizontalLineCommand | VerticalLineCommand;
 type CommandsDef = [MoveToCommand, ...CommandDef[]];
 
 export type Path = Shape<'path'> & {
@@ -76,7 +79,7 @@ abstract class Command extends EventTarget {
   abstract updateHandles(): void;
 }
 
-class MoveLineTo<T extends 'M' | 'L'> extends Command {
+abstract class MoveLineTo<T extends 'M' | 'L'> extends Command {
   constructor(relative: boolean, private command: T, private position: Point) {
     super(relative);
   }
@@ -124,10 +127,7 @@ class MoveLineTo<T extends 'M' | 'L'> extends Command {
 
   onMove(position: Point, mouse: 'up' | 'move') {
     this.position = this.relative ? substractPoints(position, this.prev?.getAbsolutePosition()) : position;
-    this.handles[0].setPosition(position);
-
-    this.next?.updateHandles();
-
+    this.updateHandles();
     this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
   }
 }
@@ -144,7 +144,93 @@ class LineTo extends MoveLineTo<'L'> {
   }
 }
 
-type PathCommand = MoveTo | LineTo;
+abstract class StraightLine<T extends 'H' | 'V'> extends Command {
+  constructor(relative: boolean, protected command: T, protected length: number) {
+    super(relative);
+  }
+
+  private get letter() {
+    if (this.relative) {
+      return this.command.toLowerCase();
+    }
+
+    return this.command;
+  }
+
+  toString() {
+    return `${this.letter} ${this.length}`;
+  }
+
+  toJSON() {
+    return [this.letter, this.length] as T extends 'H' ? HorizontalLineCommand : VerticalLineCommand;
+  }
+
+  abstract getAbsolutePositionFrom(point: Point): Point;
+
+  getAbsolutePosition() {
+    if (!this.prev) {
+      throw new Error('prev should be defined');
+    }
+
+    return this.getAbsolutePositionFrom(this.prev.getAbsolutePosition());
+  }
+
+  getRelativePosition() {
+    return { x: 0, y: 0 };
+  }
+
+  addHandles() {
+    this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove.bind(this)));
+  }
+
+  updateHandles() {
+    this.handles[0].setPosition(this.getAbsolutePosition());
+    this.next?.updateHandles();
+  }
+
+  onMove(_position: Point, mouse: 'up' | 'move') {
+    this.updateHandles();
+    this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
+  }
+}
+
+class HorizontalLine extends StraightLine<'H'> {
+  constructor(relative: boolean, length: number) {
+    super(relative, 'H', length);
+  }
+
+  getAbsolutePositionFrom(point: Point) {
+    return {
+      x: (this.relative ? point.x : 0) + this.length,
+      y: point.y,
+    };
+  }
+
+  onMove(position: Point, mouse: 'up' | 'move') {
+    this.length = this.relative ? position.x - (this.prev?.getAbsolutePosition().x ?? 0) : position.x;
+    super.onMove(position, mouse);
+  }
+}
+
+class VerticalLine extends StraightLine<'V'> {
+  constructor(relative: boolean, length: number) {
+    super(relative, 'V', length);
+  }
+
+  getAbsolutePositionFrom(point: Point) {
+    return {
+      x: point.x,
+      y: (this.relative ? point.y : 0) + this.length,
+    };
+  }
+
+  onMove(position: Point, mouse: 'up' | 'move') {
+    this.length = this.relative ? position.y - (this.prev?.getAbsolutePosition().y ?? 0) : position.y;
+    super.onMove(position, mouse);
+  }
+}
+
+type PathCommand = MoveTo | LineTo | HorizontalLine | VerticalLine;
 
 class PathCommands {
   private commands: [MoveTo, ...PathCommand[]];
@@ -167,6 +253,8 @@ class PathCommands {
 
       if (isMoveTo(def)) return new MoveTo(relative, def[1]);
       if (isLineTo(def)) return new LineTo(relative, def[1]);
+      if (isHorizontalLine(def)) return new HorizontalLine(relative, def[1]);
+      if (isVerticalLine(def)) return new VerticalLine(relative, def[1]);
 
       throw new Error();
     };
