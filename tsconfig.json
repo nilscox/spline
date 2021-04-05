@@ -7,5 +7,6 @@
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
     "strict": true
-  }
+  },
+  "include": ["src"]
 }
