@@ -1,7 +1,8 @@
-import React, { forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, ReactElement, useImperativeHandle, useRef } from 'react';
+import { v4 as uuid } from 'uuid';
 
-import { Point } from '../Point';
-import useHelperStrokeWidth from '../useHelperStrokeWidth';
+import { Point } from '../../../Point';
+import useHelperStrokeWidth from '../../../useHelperStrokeWidth';
 
 export type LineProps = {
   start: Point;
@@ -13,7 +14,7 @@ export type LineRef = {
   setEnd: (point: Point) => void;
 };
 
-const Line = forwardRef<LineRef, LineProps>(({ start, end }, ref) => {
+const LineComponent = forwardRef<LineRef, LineProps>(({ start, end }, ref) => {
   const strokeWidth = useHelperStrokeWidth();
   const lineRef = useRef<SVGLineElement>(null);
 
@@ -34,5 +35,24 @@ const Line = forwardRef<LineRef, LineProps>(({ start, end }, ref) => {
     </>
   );
 });
+
+class Line {
+  private id = uuid();
+
+  private ref: LineRef | null = null;
+  public element: ReactElement;
+
+  constructor(start: Point, end: Point) {
+    this.element = <LineComponent key={this.id} ref={(ref) => (this.ref = ref)} start={start} end={end} />;
+  }
+
+  setStart(point: Point) {
+    this.ref?.setStart(point);
+  }
+
+  setEnd(point: Point) {
+    this.ref?.setEnd(point);
+  }
+}
 
 export default Line;

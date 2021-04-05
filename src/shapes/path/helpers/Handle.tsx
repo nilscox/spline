@@ -1,8 +1,9 @@
-import React, { forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, ReactElement, useImperativeHandle, useRef } from 'react';
+import { v4 as uuid } from 'uuid';
 
-import { Point } from '../Point';
-import useHelperStrokeWidth from '../useHelperStrokeWidth';
-import useTranslation from '../useTranslation';
+import { Point } from '../../../Point';
+import useHelperStrokeWidth from '../../../useHelperStrokeWidth';
+import useTranslation from '../../../useTranslation';
 
 export type HandleProps = {
   x: number;
@@ -14,7 +15,7 @@ export type HandleRef = {
   setPosition: (point: Point) => void;
 };
 
-const Handle = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, ref) => {
+const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, ref) => {
   const strokeWidth = useHelperStrokeWidth();
   const size = strokeWidth * 15;
   const lineRef = useRef<SVGLineElement>(null);
@@ -47,5 +48,28 @@ const Handle = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, ref) => {
     </>
   );
 });
+
+class Handle {
+  private id = uuid();
+
+  private ref: HandleRef | null = null;
+  public element: ReactElement;
+
+  constructor(private position: Point, onMove: HandleProps['onMove']) {
+    this.element = (
+      <HandleComponent
+        key={this.id}
+        ref={(ref) => (this.ref = ref)}
+        x={this.position.x}
+        y={this.position.y}
+        onMove={onMove}
+      />
+    );
+  }
+
+  setPosition(point: Point) {
+    this.ref?.setPosition(point);
+  }
+}
 
 export default Handle;
