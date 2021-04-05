@@ -30,9 +30,16 @@ const LineComponent = forwardRef<LineRef, LineProps>(({ start, end }, ref) => {
   }));
 
   return (
-    <>
-      <line ref={lineRef} x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="#CCC" strokeWidth={strokeWidth} />
-    </>
+    <line
+      ref={lineRef}
+      x1={start.x}
+      y1={start.y}
+      x2={end.x}
+      y2={end.y}
+      stroke="#CCC"
+      strokeWidth={strokeWidth}
+      style={{ pointerEvents: 'none' }}
+    />
   );
 });
 

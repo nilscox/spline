@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 
 import BoundingBox from '../BoundingBox';
-import CenterCross from '../CenterCross';
+import Cross from '../Cross';
 import { isSelectedSelector } from '../slices/selection.slice';
 import useTransforms from '../useTransforms';
 import { Shape } from './shape';
@@ -25,7 +25,7 @@ export const CircleComponent: React.FC<Circle> = (circle) => {
       <circle cx={x} cy={y} r={radius} {...props} {...transformsProps} />
       {selected && (
         <>
-          <CenterCross x={x} y={y} size={radius / 4} />
+          <Cross x={x} y={y} size={radius / 4} />
           <BoundingBox x={x - radius} y={y - radius} width={2 * radius} height={2 * radius} />
         </>
       )}

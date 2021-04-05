@@ -1,5 +1,6 @@
 import React, { forwardRef, ReactElement, useImperativeHandle, useRef } from 'react';
 import { v4 as uuid } from 'uuid';
+import Cross, { CrossRef } from '../../../Cross';
 
 import { Point } from '../../../Point';
 import useHelperStrokeWidth from '../../../useHelperStrokeWidth';
@@ -20,6 +21,7 @@ const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, re
   const size = strokeWidth * 15;
   const lineRef = useRef<SVGLineElement>(null);
   const rectRef = useRef<SVGRectElement>(null);
+  const crossRef = useRef<CrossRef>(null);
 
   const translateHandlers = useTranslation(onMove, true);
 
@@ -28,6 +30,7 @@ const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, re
       lineRef.current?.setAttribute('x2', `${x}`);
       lineRef.current?.setAttribute('y2', `${y}`);
       rectRef.current?.setAttribute('transform', `translate(${x}, ${y})`);
+      crossRef.current?.setPosition({ x, y });
     },
   }));
 
@@ -43,8 +46,10 @@ const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, re
         stroke="#CCC"
         strokeWidth={strokeWidth}
         transform={`translate(${x}, ${y})`}
+        style={{ cursor: 'grab' }}
         {...translateHandlers}
       />
+      <Cross ref={crossRef} x={x} y={y} size={size * (2 / 3)} color="#99F" />
     </>
   );
 });

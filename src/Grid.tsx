@@ -7,7 +7,7 @@ const Grid: React.FC = () => {
   const strokeWidth = useHelperStrokeWidth();
 
   return (
-    <g visibility={show ? 'visible' : 'hidden'}>
+    <g visibility={show ? 'visible' : 'hidden'} style={{ pointerEvents: 'none' }}>
       {new Array(viewBoxHeight).fill(null).map((_, n) => (
         <line
           key={n}

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import BoundingBox from '../BoundingBox';
-import CenterCross from '../CenterCross';
+import Cross from '../Cross';
 import { isSelectedSelector } from '../slices/selection.slice';
 import useTransforms from '../useTransforms';
 
@@ -26,7 +26,7 @@ export const RectangleComponent: React.FC<Rectangle> = (rectangle) => {
       <rect x={x} y={y} width={width} height={height} {...props} {...transformsProps} />
       {selected && (
         <>
-          <CenterCross x={x + width / 2} y={y + height / 2} size={Math.max(width, height) / 6} />
+          <Cross x={x + width / 2} y={y + height / 2} size={Math.max(width, height) / 6} />
           <BoundingBox x={x} y={y} width={width} height={height} />
         </>
       )}
