@@ -29,4 +29,7 @@ module.exports = {
     ],
   },
   plugins: [new HtmlWebpackPlugin()],
+  devServer: {
+    clientLogLevel: 'error',
+  },
 };

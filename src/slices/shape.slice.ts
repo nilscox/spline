@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuid } from 'uuid';
 
+import { isPoint } from '../Point';
 import { Circle } from '../shapes/circle';
-import { isPath, isPoint, Path } from '../shapes/path';
+import { isPath, Path } from '../shapes/path';
 import { Rectangle } from '../shapes/rectangle';
 import { Shape } from '../shapes/shape';
 

@@ -1,13 +1,29 @@
 import { MouseEventHandler, useRef } from 'react';
 
-import { useSvg } from './App';
+import { useConfig, useSvg } from './App';
+import { Point } from './Point';
 import useSvgPoint from './useSvgPoint';
 
-const useTranslation = (setTranslation: (p: { x: number; y: number }, mouse: 'up' | 'move') => void) => {
+const useTranslation = (
+  setTranslation: (p: { x: number; y: number }, mouse: 'up' | 'move') => void,
+  absolute = false
+) => {
   const svg = useSvg();
 
   const getSvgPoint = useSvgPoint();
   const dragStart = useRef<SVGPoint>();
+
+  const { snapToGrid, gridCellSize } = useConfig();
+  const snap = (p: Point): Point => {
+    if (!snapToGrid) {
+      return p;
+    }
+
+    return {
+      x: Math.round(p.x / gridCellSize) * gridCellSize,
+      y: Math.round(p.y / gridCellSize) * gridCellSize,
+    };
+  };
 
   const onMouseDown: MouseEventHandler = (e) => {
     if (dragStart.current || !svg) {
@@ -33,10 +49,10 @@ const useTranslation = (setTranslation: (p: { x: number; y: number }, mouse: 'up
       return;
     }
 
-    const { x, y } = dragStart.current;
+    const { x, y } = absolute ? { x: 0, y: 0 } : dragStart.current;
     const p = getSvgPoint(e.clientX, e.clientY);
 
-    setTranslation({ x: p.x - x, y: p.y - y }, 'up');
+    setTranslation(snap({ x: p.x - x, y: p.y - y }), 'up');
 
     dragStart.current = undefined;
     svg.style.cursor = 'default';
@@ -47,10 +63,10 @@ const useTranslation = (setTranslation: (p: { x: number; y: number }, mouse: 'up
       return;
     }
 
-    const { x, y } = dragStart.current;
+    const { x, y } = absolute ? { x: 0, y: 0 } : dragStart.current;
     const p = getSvgPoint(e.clientX, e.clientY);
 
-    setTranslation({ x: p.x - x, y: p.y - y }, 'move');
+    setTranslation(snap({ x: p.x - x, y: p.y - y }), 'move');
   };
 
   return { onMouseDown };
