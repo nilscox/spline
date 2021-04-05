@@ -1,4 +1,5 @@
 import { Point } from '../../Point';
+import { PathUpdateEvent } from './PathUpdateEvent';
 import Handle from './helpers/Handle';
 import Line from './helpers/Line';
 
@@ -54,4 +55,13 @@ export abstract class Command extends EventTarget {
 
   abstract addHandles(): void;
   abstract updateHandles(): void;
+
+  protected performMutation(mouse: 'up' | 'move', perform: () => void) {
+    const prev = this.getAbsolutePosition();
+
+    perform();
+
+    this.updateHandles();
+    this.dispatchEvent(new PathUpdateEvent(mouse, prev, this.getAbsolutePosition()));
+  }
 }

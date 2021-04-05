@@ -18,7 +18,7 @@ export const PathComponent: React.FC<Path> = (path) => {
 
   const dispatch = useDispatch();
 
-  const onHandleMove = (mouse: 'up' | 'move') => {
+  const onUpdate = (mouse: 'up' | 'move') => {
     if (mouse === 'move') {
       pathRef.current?.setAttribute('d', commands.toString());
     } else {
@@ -26,7 +26,7 @@ export const PathComponent: React.FC<Path> = (path) => {
     }
   };
 
-  const commands = useMemo(() => new PathCommands(path.commands, onHandleMove), [path.commands]);
+  const commands = useMemo(() => new PathCommands(path.commands, onUpdate), [path.commands]);
 
   return (
     <g key={id}>

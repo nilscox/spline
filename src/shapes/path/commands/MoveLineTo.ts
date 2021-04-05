@@ -41,9 +41,9 @@ abstract class MoveLineTo<T extends 'M' | 'L'> extends Command {
   }
 
   onMove(position: Point, mouse: 'up' | 'move') {
-    this.position = this.relative ? substractPoints(position, this.prev?.getAbsolutePosition()) : position;
-    this.updateHandles();
-    this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
+    this.performMutation(mouse, () => {
+      this.position = this.relative ? substractPoints(position, this.prev?.getAbsolutePosition()) : position;
+    });
   }
 }
 

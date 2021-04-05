@@ -2,6 +2,7 @@ import { addPoints, Point, substractPoints } from '../../../Point';
 import Handle, { HandleProps } from '../helpers/Handle';
 import Line from '../helpers/Line';
 import { Command, CubicBezierCommand } from '../Command';
+import { PathUpdateEvent } from '../PathUpdateEvent';
 
 export class CubicBezier extends Command {
   constructor(relative: boolean, private control1: Point, private control2: Point, private end: Point) {
@@ -37,6 +38,16 @@ export class CubicBezier extends Command {
 
     this.lines.push(new Line(this.prev!.getAbsolutePosition(), this.getAbsolutePosition(this.control1)));
     this.lines.push(new Line(this.getAbsolutePosition(), this.getAbsolutePosition(this.control2)));
+
+    // TODO: remove event listener
+    this.prev!.addEventListener('pathUpdate', ((e: PathUpdateEvent) => {
+      if (this.relative) {
+        return;
+      }
+
+      const vec = substractPoints(this.control1, e.detail.prevPosition);
+      this.control1 = addPoints(e.detail.nextPosition, vec);
+    }) as EventListener);
   }
 
   updateHandles() {
@@ -54,7 +65,7 @@ export class CubicBezier extends Command {
   }
 
   onMove(which: 'control1' | 'control2' | 'end'): HandleProps['onMove'] {
-    return (position: Point, mouse: 'up' | 'move') => {
+    const mutate = (position: Point) => {
       const newPosition = this.relative ? substractPoints(position, this.prev?.getAbsolutePosition()) : position;
 
       switch (which) {
@@ -73,9 +84,10 @@ export class CubicBezier extends Command {
           this.control2 = addPoints(this.end, vec);
           break;
       }
+    };
 
-      this.updateHandles();
-      this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
+    return (position: Point, mouse: 'up' | 'move') => {
+      this.performMutation(mouse, () => mutate(position));
     };
   }
 }

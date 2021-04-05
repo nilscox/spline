@@ -3,18 +3,19 @@ import { HorizontalLine, VerticalLine } from './commands/StraightLine';
 import { CubicBezier } from './commands/CubicBezier';
 // prettier-ignore
 import { CommandDef, CommandsDef, isCubicBezier, isHorizontalLine, isLineTo, isMoveTo, isVerticalLine } from './Command';
+import { PathUpdateEvent } from './PathUpdateEvent';
 
 export type PathCommand = MoveTo | LineTo | HorizontalLine | VerticalLine | CubicBezier;
 
 export class PathCommands {
   private commands: [MoveTo, ...PathCommand[]];
 
-  constructor(defs: CommandsDef, onHandleMove: (mouse: 'move' | 'up') => void) {
+  constructor(defs: CommandsDef, onUpdate: (mouse: 'move' | 'up') => void) {
     this.commands = PathCommands.instanciateCommands(defs);
 
     for (const command of this.commands) {
-      command.addEventListener('handleMove', ((e: CustomEvent<{ mouse: 'move' | 'up' }>) => {
-        onHandleMove(e.detail.mouse);
+      command.addEventListener('pathUpdate', ((e: PathUpdateEvent) => {
+        onUpdate(e.detail.mouse);
       }) as EventListener);
     }
   }

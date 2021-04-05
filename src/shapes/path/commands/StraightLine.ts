@@ -33,6 +33,8 @@ abstract class StraightLine<T extends 'H' | 'V'> extends Command {
     return this.getAbsolutePositionFrom(this.prev.getAbsolutePosition());
   }
 
+  abstract onMove(position: Point, mouse: 'up' | 'move'): void;
+
   addHandles() {
     this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove.bind(this)));
   }
@@ -40,11 +42,6 @@ abstract class StraightLine<T extends 'H' | 'V'> extends Command {
   updateHandles() {
     this.handles[0].setPosition(this.getAbsolutePosition());
     this.next?.updateHandles();
-  }
-
-  onMove(_position: Point, mouse: 'up' | 'move') {
-    this.updateHandles();
-    this.dispatchEvent(new CustomEvent('handleMove', { detail: { mouse } }));
   }
 }
 
@@ -61,8 +58,9 @@ export class HorizontalLine extends StraightLine<'H'> {
   }
 
   onMove(position: Point, mouse: 'up' | 'move') {
-    this.length = this.relative ? position.x - (this.prev?.getAbsolutePosition().x ?? 0) : position.x;
-    super.onMove(position, mouse);
+    this.performMutation(mouse, () => {
+      this.length = this.relative ? position.x - (this.prev?.getAbsolutePosition().x ?? 0) : position.x;
+    });
   }
 }
 
@@ -79,7 +77,8 @@ export class VerticalLine extends StraightLine<'V'> {
   }
 
   onMove(position: Point, mouse: 'up' | 'move') {
-    this.length = this.relative ? position.y - (this.prev?.getAbsolutePosition().y ?? 0) : position.y;
-    super.onMove(position, mouse);
+    this.performMutation(mouse, () => {
+      this.length = this.relative ? position.y - (this.prev?.getAbsolutePosition().y ?? 0) : position.y;
+    });
   }
 }
