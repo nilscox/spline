@@ -1,11 +1,12 @@
 import React, { ReactElement, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
+import { v4 as uuid } from 'uuid';
+
 import { Point } from '../Point';
 import { updateShape } from '../slices/shape.slice';
 import HandleComponent, { HandleProps, HandleRef } from './Handle';
-import { v4 as uuid } from 'uuid';
-
 import { Shape } from './shape';
+import LineComponent, { LineProps, LineRef } from './Line';
 
 const addPoints = ({ x: x1, y: y1 }: Point, { x: x2, y: y2 }: Point = { x: 0, y: 0 }): Point => {
   return { x: x1 + x2, y: y1 + y2 };
@@ -62,8 +63,28 @@ class Handle {
   }
 }
 
+class Line {
+  private id = uuid();
+
+  private ref: LineRef | null = null;
+  public element: ReactElement;
+
+  constructor(start: Point, end: Point) {
+    this.element = <LineComponent key={this.id} ref={(ref) => (this.ref = ref)} start={start} end={end} />;
+  }
+
+  setStart(point: Point) {
+    this.ref?.setStart(point);
+  }
+
+  setEnd(point: Point) {
+    this.ref?.setEnd(point);
+  }
+}
+
 abstract class Command extends EventTarget {
   public handles: Handle[] = [];
+  public lines: Line[] = [];
 
   public prev: Command | undefined;
   public next: Command | undefined;
@@ -248,15 +269,36 @@ class CubicBezier extends Command {
   }
 
   addHandles() {
+    const { prev } = this;
+
+    if (!prev) {
+      throw new Error('prev should be defined');
+    }
+
     this.handles.push(new Handle(this.getAbsolutePosition(this.control1), this.onMove('control1')));
     this.handles.push(new Handle(this.getAbsolutePosition(this.control2), this.onMove('control2')));
     this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove('end')));
+
+    this.lines.push(new Line(prev.getAbsolutePosition(), this.getAbsolutePosition(this.control1)));
+    this.lines.push(new Line(this.getAbsolutePosition(this.control2), this.getAbsolutePosition()));
   }
 
   updateHandles() {
+    const { prev } = this;
+
+    if (!prev) {
+      throw new Error('prev should be defined');
+    }
+
     this.handles[0].setPosition(this.getAbsolutePosition(this.control1));
     this.handles[1].setPosition(this.getAbsolutePosition(this.control2));
     this.handles[2].setPosition(this.getAbsolutePosition());
+
+    this.lines[0].setStart(prev.getAbsolutePosition());
+    this.lines[0].setEnd(this.getAbsolutePosition(this.control1));
+
+    this.lines[1].setStart(this.getAbsolutePosition(this.control2));
+    this.lines[1].setEnd(this.getAbsolutePosition());
   }
 
   onMove(which: 'control1' | 'control2' | 'end') {
@@ -334,8 +376,8 @@ class PathCommands {
     return [first.toJSON(), ...rest.map((command) => command.toJSON())];
   }
 
-  get handles() {
-    return this.commands.map((command) => command.handles).flat();
+  get helpers() {
+    return this.commands.map((command) => [...command.handles, ...command.lines]).flat();
   }
 }
 
@@ -358,7 +400,7 @@ export const PathComponent: React.FC<Path> = (path) => {
   return (
     <g key={id}>
       <path ref={pathRef} d={commands.toString()} {...props} />
-      {commands.handles.map((handle) => handle.element)}
+      {commands.helpers.map(({ element }) => element)}
     </g>
   );
 };
