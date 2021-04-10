@@ -1,5 +1,5 @@
-import { Point } from '../../Point';
-import { PathUpdateEvent } from './PathUpdateEvent';
+import { addPoints, Point } from '../../Point';
+import { HandleMoveEvent } from './HandleMoveEvent';
 import Handle from './helpers/Handle';
 import Line from './helpers/Line';
 
@@ -44,30 +44,56 @@ export type CommandDef =
 export type CommandsDef = [MoveToCommand, ...CommandDef[]];
 
 export abstract class Command extends EventTarget {
-  public handles: Handle[] = [];
+  public handles: Record<string, Handle> = {};
   public lines: Line[] = [];
 
-  public prev: Command | undefined;
-  public next: Command | undefined;
-
-  constructor(protected relative: boolean) {
+  constructor(protected prev: Command | undefined, protected relative: boolean) {
     super();
   }
+
+  protected abstract get letter(): CommandDef[0];
 
   abstract toString(): string;
   abstract toJSON(): CommandDef;
 
-  abstract getAbsolutePosition(): Point;
+  abstract get end(): Point;
+  abstract get helpers(): { handles: Record<string, Point>; lines?: Array<[Point, Point]> };
 
-  abstract addHandles(): void;
-  abstract updateHandles(): void;
+  abstract onHandleMove(point: Point, handleName: string): void;
 
-  protected performMutation(mouse: 'up' | 'move', perform: () => void) {
-    const prev = this.getAbsolutePosition();
+  onMount(): (() => void) | void {}
 
-    perform();
+  absolute(point: Point): Point {
+    return this.relative ? addPoints(point, this.prev?.absolute(this.prev?.end)) : point;
+  }
 
-    this.updateHandles();
-    this.dispatchEvent(new PathUpdateEvent(mouse, prev, this.getAbsolutePosition()));
+  createHelpers() {
+    const { handles, lines = [] } = this.helpers;
+
+    const onHandleMove = (handleName: string) => (vec: Point, mouse: 'move' | 'up') => {
+      this.onHandleMove(vec, handleName);
+      this.dispatchEvent(new HandleMoveEvent(vec, mouse));
+    };
+
+    for (const [name, position] of Object.entries(handles)) {
+      this.handles[name] = new Handle(position, onHandleMove(name));
+    }
+
+    for (const [start, end] of lines) {
+      this.lines.push(new Line(start, end));
+    }
+  }
+
+  updateHelpers() {
+    const { handles, lines = [] } = this.helpers;
+
+    for (const [name, position] of Object.entries(handles)) {
+      this.handles[name].setPosition(position);
+    }
+
+    for (const [i, [start, end]] of Object.entries(lines)) {
+      this.lines[Number(i)].setStart(start);
+      this.lines[Number(i)].setEnd(end);
+    }
   }
 }

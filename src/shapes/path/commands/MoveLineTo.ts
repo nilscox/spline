@@ -1,60 +1,59 @@
-import { addPoints, Point, substractPoints } from '../../../Point';
-import Handle from '../helpers/Handle';
+import { addPoints, Point } from '../../../Point';
 import { Command, LineToCommand, MoveToCommand } from '../Command';
 
-abstract class MoveLineTo<T extends 'M' | 'L'> extends Command {
-  constructor(relative: boolean, private command: T, private position: Point) {
-    super(relative);
-  }
+abstract class MoveLineTo extends Command {
+  protected initialTo: Point;
 
-  private get letter() {
-    if (this.relative) {
-      return this.command.toLowerCase();
-    }
-
-    return this.command;
+  constructor(prev: Command | undefined, relative: boolean, protected to: Point) {
+    super(prev, relative);
+    this.initialTo = to;
   }
 
   toString() {
-    return `${this.letter} ${this.position.x} ${this.position.y}`;
+    return `${this.letter} ${this.end.x} ${this.end.y}`;
   }
 
-  toJSON() {
-    return [this.letter, this.position] as T extends 'M' ? MoveToCommand : LineToCommand;
+  get end() {
+    return this.to;
   }
 
-  getAbsolutePosition() {
-    if (!this.relative || !this.prev) {
-      return this.position;
-    }
-
-    return addPoints(this.prev.getAbsolutePosition(), this.position);
+  get helpers() {
+    return {
+      handles: {
+        end: this.absolute(this.end),
+      },
+    };
   }
 
-  addHandles() {
-    this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove.bind(this)));
-  }
-
-  updateHandles() {
-    this.handles[0].setPosition(this.getAbsolutePosition());
-    this.next?.updateHandles();
-  }
-
-  onMove(position: Point, mouse: 'up' | 'move') {
-    this.performMutation(mouse, () => {
-      this.position = this.relative ? substractPoints(position, this.prev?.getAbsolutePosition()) : position;
-    });
+  onHandleMove(vec: Point) {
+    this.to = addPoints(this.initialTo, vec);
   }
 }
 
-export class MoveTo extends MoveLineTo<'M'> {
-  constructor(relative: boolean, position: Point) {
-    super(relative, 'M', position);
+export class MoveTo extends MoveLineTo {
+  static isMoveTo(command: Command): command is MoveTo {
+    return command instanceof MoveTo;
+  }
+
+  protected get letter() {
+    return this.relative ? 'm' : 'M';
+  }
+
+  toJSON(): MoveToCommand {
+    return [this.letter, this.end];
   }
 }
 
-export class LineTo extends MoveLineTo<'L'> {
-  constructor(relative: boolean, position: Point) {
-    super(relative, 'L', position);
+export class LineTo extends MoveLineTo {
+  static isLineTo(command: Command): command is LineTo {
+    return command instanceof LineTo;
+  }
+
+  protected get letter() {
+    return this.relative ? 'l' : 'L';
+  }
+
+  toJSON(): LineToCommand {
+    return [this.letter, this.end];
   }
 }

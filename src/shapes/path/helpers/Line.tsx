@@ -1,10 +1,10 @@
-import React, { forwardRef, ReactElement, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, ReactElement, useImperativeHandle, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 
 import { Point } from '../../../Point';
 import useHelperStrokeWidth from '../../../useHelperStrokeWidth';
 
-export type LineProps = Omit<React.SVGProps<SVGLineElement>, 'start' | 'end'> & {
+export type LineProps = {
   start: Point;
   end: Point;
 };
@@ -12,11 +12,14 @@ export type LineProps = Omit<React.SVGProps<SVGLineElement>, 'start' | 'end'> & 
 export type LineRef = {
   setStart: (point: Point) => void;
   setEnd: (point: Point) => void;
+  setDraggable: (draggable: boolean) => void;
 };
 
 const LineComponent = forwardRef<LineRef, LineProps>(({ start, end, ...props }, ref) => {
   const strokeWidth = useHelperStrokeWidth();
   const lineRef = useRef<SVGLineElement>(null);
+
+  const [draggable, setDraggable] = useState(true);
 
   useImperativeHandle(ref, () => ({
     setStart: ({ x, y }: Point) => {
@@ -27,6 +30,7 @@ const LineComponent = forwardRef<LineRef, LineProps>(({ start, end, ...props }, 
       lineRef.current?.setAttribute('x2', `${x}`);
       lineRef.current?.setAttribute('y2', `${y}`);
     },
+    setDraggable,
   }));
 
   return (
@@ -38,8 +42,9 @@ const LineComponent = forwardRef<LineRef, LineProps>(({ start, end, ...props }, 
       y2={end.y}
       stroke="#CCC"
       strokeWidth={strokeWidth}
+      pointerEvents="none"
+      strokeDasharray={!draggable ? 1 : undefined}
       {...props}
-      style={{ pointerEvents: 'none', ...props.style }}
     />
   );
 });
@@ -50,17 +55,12 @@ class Line {
   private ref: LineRef | null = null;
   public element: ReactElement;
 
-  constructor(start: Point, end: Point, dash = false) {
-    this.element = (
-      <LineComponent
-        key={this.id}
-        ref={(ref) => (this.ref = ref)}
-        start={start}
-        end={end}
-        strokeDasharray={dash ? 1 : undefined}
-        style={{ pointerEvents: dash ? 'none' : undefined }}
-      />
-    );
+  constructor(start: Point, end: Point) {
+    this.element = <LineComponent key={this.id} ref={(ref) => (this.ref = ref)} start={start} end={end} />;
+  }
+
+  set draggable(draggable: boolean) {
+    this.ref?.setDraggable(draggable);
   }
 
   setStart(point: Point) {

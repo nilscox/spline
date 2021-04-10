@@ -1,84 +1,69 @@
 import { Point } from '../../../Point';
-import Handle from '../helpers/Handle';
 import { Command, HorizontalLineCommand, VerticalLineCommand } from '../Command';
 
-abstract class StraightLine<T extends 'H' | 'V'> extends Command {
-  constructor(relative: boolean, protected command: T, protected length: number) {
-    super(relative);
-  }
+abstract class StraightLine extends Command {
+  protected initialLength: number;
 
-  private get letter() {
-    if (this.relative) {
-      return this.command.toLowerCase();
-    }
-
-    return this.command;
+  constructor(prev: Command, relative: boolean, protected length: number) {
+    super(prev, relative);
+    this.initialLength = length;
   }
 
   toString() {
     return `${this.letter} ${this.length}`;
   }
 
-  toJSON() {
-    return [this.letter, this.length] as T extends 'H' ? HorizontalLineCommand : VerticalLineCommand;
+  toJSON(): HorizontalLineCommand | VerticalLineCommand {
+    return [this.letter as 'H' | 'h' | 'V' | 'v', this.length];
   }
 
-  abstract getAbsolutePositionFrom(point: Point): Point;
-
-  getAbsolutePosition() {
-    if (!this.prev) {
-      throw new Error('prev should be defined');
-    }
-
-    return this.getAbsolutePositionFrom(this.prev.getAbsolutePosition());
-  }
-
-  abstract onMove(position: Point, mouse: 'up' | 'move'): void;
-
-  addHandles() {
-    this.handles.push(new Handle(this.getAbsolutePosition(), this.onMove.bind(this)));
-  }
-
-  updateHandles() {
-    this.handles[0].setPosition(this.getAbsolutePosition());
-    this.next?.updateHandles();
+  get helpers() {
+    return {
+      handles: {
+        end: this.absolute(this.end),
+      },
+    };
   }
 }
 
-export class HorizontalLine extends StraightLine<'H'> {
-  constructor(relative: boolean, length: number) {
-    super(relative, 'H', length);
+export class HorizontalLine extends StraightLine {
+  constructor(prev: Command, relative: boolean, length: number) {
+    super(prev, relative, length);
   }
 
-  getAbsolutePositionFrom(point: Point) {
+  protected get letter() {
+    return this.relative ? 'h' : 'H';
+  }
+
+  get end() {
     return {
-      x: (this.relative ? point.x : 0) + this.length,
-      y: point.y,
+      x: this.length,
+      y: this.relative ? 0 : this.prev!.absolute(this.prev!.end).y,
     };
   }
 
-  onMove(position: Point, mouse: 'up' | 'move') {
-    this.performMutation(mouse, () => {
-      this.length = this.relative ? position.x - (this.prev?.getAbsolutePosition().x ?? 0) : position.x;
-    });
+  onHandleMove(vec: Point) {
+    this.length = this.initialLength + vec.x;
   }
 }
 
-export class VerticalLine extends StraightLine<'V'> {
-  constructor(relative: boolean, length: number) {
-    super(relative, 'V', length);
+export class VerticalLine extends StraightLine {
+  constructor(command: Command, relative: boolean, length: number) {
+    super(command, relative, length);
   }
 
-  getAbsolutePositionFrom(point: Point) {
+  protected get letter() {
+    return this.relative ? 'v' : 'V';
+  }
+
+  get end() {
     return {
-      x: point.x,
-      y: (this.relative ? point.y : 0) + this.length,
+      x: this.relative ? 0 : this.prev!.absolute(this.prev!.end).x,
+      y: this.length,
     };
   }
 
-  onMove(position: Point, mouse: 'up' | 'move') {
-    this.performMutation(mouse, () => {
-      this.length = this.relative ? position.y - (this.prev?.getAbsolutePosition().y ?? 0) : position.y;
-    });
+  onHandleMove(vec: Point) {
+    this.length = this.initialLength + vec.y;
   }
 }

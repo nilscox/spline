@@ -1,5 +1,16 @@
 import { immerable, produce } from 'immer';
 
+abstract class Abstract {
+  abstract get foo(): number;
+  abstract set foo(value: number);
+}
+
+class Klass extends Abstract {
+  get foo(): number {
+    return 42;
+  }
+}
+
 class Toto {
   [immerable] = true;
 

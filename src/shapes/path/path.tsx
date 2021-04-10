@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { updateShape } from '../../slices/shape.slice';
@@ -27,6 +27,8 @@ export const PathComponent: React.FC<Path> = (path) => {
   };
 
   const commands = useMemo(() => new PathCommands(path.commands, onUpdate), [path.commands]);
+
+  useEffect(() => commands.onMount());
 
   return (
     <g key={id}>
