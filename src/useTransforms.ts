@@ -3,8 +3,8 @@ import { useDispatch } from 'react-redux';
 
 import { Shape } from './shapes/shape';
 import { moveShape } from './slices/shape.slice';
-import useTranslation from './useTranslation';
 import useShapeSelection from './useShapeSelection';
+import useTranslation from './useTranslation';
 
 type Transform = {
   translate: { x: number; y: number };

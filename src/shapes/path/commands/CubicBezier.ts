@@ -19,7 +19,7 @@ abstract class Bezier extends Command {
     this.initialEnd = end;
   }
 
-  get helpers() {
+  get helpers(): { handles: Record<string, Point>; lines: Record<string, [Point, Point]> } {
     return {
       handles: {
         control1: this.absolute(this.control1),
@@ -130,9 +130,27 @@ export class SlopeCubicBezier extends Bezier {
 
   set control1(_: Point) {}
 
+  get helpers() {
+    const helpers = super.helpers;
+    const prev = this.prev!;
+
+    if (!CubicBezier.isCubicBezier(prev) && !SlopeCubicBezier.isSlopeCubicBezier(prev)) {
+      delete helpers.handles['control1'];
+      delete helpers.lines['control1'];
+    }
+
+    return helpers;
+  }
+
   onMount() {
-    this.handles['control1'].draggable = false;
-    this.lines['control1'].draggable = false;
+    if (this.handles['control1']) {
+      this.handles['control1'].draggable = false;
+    }
+
+    if (this.lines['control1']) {
+      this.lines['control1'].draggable = false;
+    }
+
     return super.onMount();
   }
 }

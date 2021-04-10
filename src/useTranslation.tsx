@@ -4,17 +4,10 @@ import { useConfig, useSvg } from './App';
 import { Point } from './Point';
 import useSvgPoint from './useSvgPoint';
 
-const useTranslation = (
-  setTranslation: (p: { x: number; y: number }, mouse: 'up' | 'move') => void,
-  absolute = false
-) => {
-  const svg = useSvg();
-
-  const getSvgPoint = useSvgPoint();
-  const dragStart = useRef<SVGPoint>();
-
+export const useSnap = () => {
   const { snapToGrid, gridCellSize } = useConfig();
-  const snap = (p: Point): Point => {
+
+  return (p: Point): Point => {
     if (!snapToGrid) {
       return p;
     }
@@ -24,6 +17,18 @@ const useTranslation = (
       y: Math.round(p.y / gridCellSize) * gridCellSize,
     };
   };
+};
+
+const useTranslation = (
+  setTranslation: (p: { x: number; y: number }, mouse: 'up' | 'move') => void,
+  absolute = false
+) => {
+  const svg = useSvg();
+
+  const getSvgPoint = useSvgPoint();
+  const dragStart = useRef<SVGPoint>();
+
+  const snap = useSnap();
 
   const onMouseDown: MouseEventHandler = (e) => {
     if (dragStart.current || !svg) {
