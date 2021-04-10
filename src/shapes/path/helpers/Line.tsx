@@ -40,10 +40,10 @@ const LineComponent = forwardRef<LineRef, LineProps>(({ start, end, ...props }, 
       y1={start.y}
       x2={end.x}
       y2={end.y}
-      stroke="#CCC"
+      stroke="#0006"
       strokeWidth={strokeWidth}
       pointerEvents="none"
-      strokeDasharray={!draggable ? 1 : undefined}
+      strokeDasharray={!draggable ? 2 * strokeWidth : undefined}
       {...props}
     />
   );

@@ -17,11 +17,6 @@ abstract class Bezier extends Command {
   constructor(prev: Command, relative: boolean, public end: Point) {
     super(prev, relative);
     this.initialEnd = end;
-
-    (() => {
-      this.initialControl1 = this.control1;
-      this.initialControl2 = this.control2;
-    })();
   }
 
   get helpers() {
@@ -31,10 +26,10 @@ abstract class Bezier extends Command {
         control2: this.absolute(this.control2),
         end: this.absolute(this.end),
       },
-      lines: [
-        [this.prev!.absolute(this.prev!.end), this.absolute(this.control1)] as [Point, Point],
-        [this.absolute(this.end), this.absolute(this.control2)] as [Point, Point],
-      ],
+      lines: {
+        control1: [this.prev!.absolute(this.prev!.end), this.absolute(this.control1)] as [Point, Point],
+        control2: [this.absolute(this.end), this.absolute(this.control2)] as [Point, Point],
+      },
     };
   }
 
@@ -74,6 +69,8 @@ export class CubicBezier extends Bezier {
 
   constructor(command: Command, relative: boolean, public control1: Point, public control2: Point, end: Point) {
     super(command, relative, end);
+    this.initialControl1 = control1;
+    this.initialControl2 = control2;
   }
 
   protected get letter() {
@@ -98,6 +95,7 @@ export class SlopeCubicBezier extends Bezier {
 
   constructor(command: Command, relative: boolean, public control2: Point, end: Point) {
     super(command, relative, end);
+    this.initialControl2 = control2;
   }
 
   protected get letter() {
@@ -131,4 +129,10 @@ export class SlopeCubicBezier extends Bezier {
   }
 
   set control1(_: Point) {}
+
+  onMount() {
+    this.handles['control1'].draggable = false;
+    this.lines['control1'].draggable = false;
+    return super.onMount();
+  }
 }

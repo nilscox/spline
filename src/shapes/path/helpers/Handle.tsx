@@ -44,16 +44,16 @@ const HandleComponent = forwardRef<HandleRef, HandleProps>(({ x, y, onMove }, re
         y={-size / 2}
         width={size}
         height={size}
-        fill="#CCC6"
-        stroke="#CCC"
+        fill="#0001"
+        stroke="#0006"
         strokeWidth={strokeWidth}
         transform={`translate(${x}, ${y})`}
         pointerEvents={draggable ? 'all' : 'none'}
         cursor={draggable ? 'grab' : undefined}
-        strokeDasharray={!draggable ? 1 : undefined}
+        strokeDasharray={!draggable ? 2 * strokeWidth : undefined}
         {...(draggable && translateHandlers)}
       />
-      <Cross ref={crossRef} x={x} y={y} size={size * (2 / 3)} color="#99F" pointerEvents="none" />
+      <Cross ref={crossRef} x={x} y={y} size={size * (2 / 3)} color="#0006" pointerEvents="none" />
     </>
   );
 });

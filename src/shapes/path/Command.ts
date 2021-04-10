@@ -33,19 +33,25 @@ export const isSlopeCubicBezier = (command: CommandDef): command is SlopeCubicBe
   return command[0].toUpperCase() === 'S';
 };
 
+export type ClosePathCommand = ['Z' | 'z'];
+export const isClosePath = (command: CommandDef): command is ClosePathCommand => {
+  return command[0].toUpperCase() === 'Z';
+};
+
 export type CommandDef =
   | MoveToCommand
   | LineToCommand
   | HorizontalLineCommand
   | VerticalLineCommand
   | CubicBezierCommand
-  | SlopeCubicBezierCommand;
+  | SlopeCubicBezierCommand
+  | ClosePathCommand;
 
 export type CommandsDef = [MoveToCommand, ...CommandDef[]];
 
 export abstract class Command extends EventTarget {
   public handles: Record<string, Handle> = {};
-  public lines: Line[] = [];
+  public lines: Record<string, Line> = {};
 
   constructor(protected prev: Command | undefined, protected relative: boolean) {
     super();
@@ -57,7 +63,7 @@ export abstract class Command extends EventTarget {
   abstract toJSON(): CommandDef;
 
   abstract get end(): Point;
-  abstract get helpers(): { handles: Record<string, Point>; lines?: Array<[Point, Point]> };
+  abstract get helpers(): { handles?: Record<string, Point>; lines?: Record<string, [Point, Point]> };
 
   abstract onHandleMove(point: Point, handleName: string): void;
 
@@ -68,7 +74,7 @@ export abstract class Command extends EventTarget {
   }
 
   createHelpers() {
-    const { handles, lines = [] } = this.helpers;
+    const { handles = {}, lines = {} } = this.helpers;
 
     const onHandleMove = (handleName: string) => (vec: Point, mouse: 'move' | 'up') => {
       this.onHandleMove(vec, handleName);
@@ -79,21 +85,21 @@ export abstract class Command extends EventTarget {
       this.handles[name] = new Handle(position, onHandleMove(name));
     }
 
-    for (const [start, end] of lines) {
-      this.lines.push(new Line(start, end));
+    for (const [name, [start, end]] of Object.entries(lines)) {
+      this.lines[name] = new Line(start, end);
     }
   }
 
   updateHelpers() {
-    const { handles, lines = [] } = this.helpers;
+    const { handles = {}, lines = {} } = this.helpers;
 
     for (const [name, position] of Object.entries(handles)) {
       this.handles[name].setPosition(position);
     }
 
-    for (const [i, [start, end]] of Object.entries(lines)) {
-      this.lines[Number(i)].setStart(start);
-      this.lines[Number(i)].setEnd(end);
+    for (const [name, [start, end]] of Object.entries(lines)) {
+      this.lines[name].setStart(start);
+      this.lines[name].setEnd(end);
     }
   }
 }
