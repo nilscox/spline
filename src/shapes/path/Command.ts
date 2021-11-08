@@ -3,39 +3,55 @@ import { HandleMoveEvent } from './HandleMoveEvent';
 import Handle from './helpers/Handle';
 import Line from './helpers/Line';
 
+const commandTypeGuard = (upperLetter: string, length: number, command: Array<string | number | Point>) => {
+  return command[0].toString().toUpperCase() === upperLetter && command.length === length;
+};
+
 export type MoveToCommand = ['M' | 'm', Point];
-export const isMoveTo = (command: CommandDef): command is MoveToCommand => {
-  return command[0].toUpperCase() === 'M';
+export const isMoveTo = (command: Array<string | number | Point>): command is MoveToCommand => {
+  return commandTypeGuard('M', 2, command);
 };
 
 export type LineToCommand = ['L' | 'l', Point];
-export const isLineTo = (command: CommandDef): command is LineToCommand => {
-  return command[0].toUpperCase() === 'L';
+export const isLineTo = (command: Array<string | number | Point>): command is LineToCommand => {
+  return commandTypeGuard('L', 2, command);
 };
 
 export type HorizontalLineCommand = ['H' | 'h', number];
-export const isHorizontalLine = (command: CommandDef): command is HorizontalLineCommand => {
-  return command[0].toUpperCase() === 'H';
+export const isHorizontalLine = (command: Array<string | number | Point>): command is HorizontalLineCommand => {
+  return commandTypeGuard('H', 2, command);
 };
 
 export type VerticalLineCommand = ['V' | 'v', number];
-export const isVerticalLine = (command: CommandDef): command is VerticalLineCommand => {
-  return command[0].toUpperCase() === 'V';
+export const isVerticalLine = (command: Array<string | number | Point>): command is VerticalLineCommand => {
+  return commandTypeGuard('V', 2, command);
 };
 
 export type CubicBezierCommand = ['C' | 'c', Point, Point, Point];
-export const isCubicBezier = (command: CommandDef): command is CubicBezierCommand => {
-  return command[0].toUpperCase() === 'C';
+export const isCubicBezier = (command: Array<string | number | Point>): command is CubicBezierCommand => {
+  return commandTypeGuard('C', 4, command);
 };
 
 export type SlopeCubicBezierCommand = ['S' | 's', Point, Point];
-export const isSlopeCubicBezier = (command: CommandDef): command is SlopeCubicBezierCommand => {
-  return command[0].toUpperCase() === 'S';
+export const isSlopeCubicBezier = (command: Array<string | number | Point>): command is SlopeCubicBezierCommand => {
+  return commandTypeGuard('S', 3, command);
 };
 
 export type ClosePathCommand = ['Z' | 'z'];
-export const isClosePath = (command: CommandDef): command is ClosePathCommand => {
-  return command[0].toUpperCase() === 'Z';
+export const isClosePath = (command: Array<string | number | Point>): command is ClosePathCommand => {
+  return commandTypeGuard('Z', 1, command);
+};
+
+export const isCommand = (command: Array<string | number | Point>): command is CommandDef => {
+  return [
+    isMoveTo,
+    isLineTo,
+    isHorizontalLine,
+    isVerticalLine,
+    isCubicBezier,
+    isSlopeCubicBezier,
+    isClosePath,
+  ].some((f) => f(command));
 };
 
 export type CommandDef =

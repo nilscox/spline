@@ -1,9 +1,6 @@
-export type Shape<T extends string> = {
+import { SVGProps } from 'react';
+
+export type Shape<T extends string> = Partial<SVGProps<SVGElement>> & {
   type: T;
   id: string;
-  x: number;
-  y: number;
-  fill?: string;
-  stroke?: string;
-  strokeWidth?: number;
 };

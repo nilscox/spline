@@ -15,13 +15,13 @@ export type Config = {
 const initialConfig: Config = {
   viewWidth: 600,
   viewHeight: 600,
-  gridCellSize: 10,
+  gridCellSize: 1,
   showGrid: true,
   snapToGrid: true,
   viewBoxX: 0,
   viewBoxY: 0,
-  viewBoxWidth: 100,
-  viewBoxHeight: 100,
+  viewBoxWidth: 24,
+  viewBoxHeight: 24,
 };
 
 export const configSlice = createSlice({
